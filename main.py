@@ -49,20 +49,10 @@ submarine        = {(5, 8): True, (5, 9): True, (5, 10): True}
 torpedo_boat     = {(9, 5): True, (9, 6): True}
 ships_list = [aircraft_carrier, cruiser, destroyer, submarine, torpedo_boat]
 
-# l'embryon de notre jeu consiste à demander à l'infini au joueur les coordonnées
-# d'un tir, puis à indiquer si ce tir touche un navire (en mémorisant les conséquences
-# de ce tir, indiquant si le navire est coulé à la suite de plusieurs tirs convergents,
-# et si la partie est finie lorsque le dernier navire est coulé)
-while ships_list:
-
-    # on demande des coordonnées au joueur tant qu'il n'en fournit pas de valides
-    # (ex. : 'A1', 'H8'), puis on les transforme en des coordonnées du programme :
-    # tuple (no_ligne, no_colonne)
+def ask_coord():
     valid_coord = False
-    shot_coord = None  # pour éviter un avertissement ("can be undefined")
     while not valid_coord:
 
-        # ex. d'entrée attendue : 'A1'
         player_coord = input("Entrez les coordonnées de votre tir (ex. : 'A1', 'H8') : ")
 
         if 2 <= len(player_coord) <= 3:
@@ -74,11 +64,20 @@ while ships_list:
                 column_no = ord(letter) - ord('A') + 1
                 if 1 <= line_no <= GRID_SIZE and letter in LETTERS:
                     valid_coord = True
-                    shot_coord = (line_no, column_no)
+                     shot_coord = (line_no, column_no)
+                    return shot_coord
             except ValueError:
                 pass
 
-    # on regarde à présent si le tir en coord_tir touche un navire
+
+while ships_list:
+
+
+
+    shot_coord = None  # pour éviter un avertissement ("can be undefined")
+
+    new_shot= ask_coord()
+
     for ship in ships_list:
         if shot_coord in ship:
             print('Un navire a été touché par votre tir !')
@@ -94,3 +93,5 @@ while ships_list:
         print("Votre tir est tombé dans l'eau")
 
 print('Bravo, vous avez coulé tous les navires')
+
+
