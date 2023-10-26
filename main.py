@@ -87,6 +87,9 @@ def analyze_shot(ship, shot_coord):
         print("Votre tir est tombé dans l'eau")
         return False
 
+def ship_is_sunk(ship):
+    return all(val is False for val in ship.values())
+
 def play_battleship():
     while ships_list:
         shot_coord = ask_coord()
