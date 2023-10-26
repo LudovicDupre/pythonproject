@@ -50,7 +50,10 @@ torpedo_boat     = {(9, 5): True, (9, 6): True}
 ships_list = [aircraft_carrier, cruiser, destroyer, submarine, torpedo_boat]
 
 def ask_coord():
+
+    shot_coord = None
     valid_coord = False
+
     while not valid_coord:
 
         player_coord = input("Entrez les coordonnées de votre tir (ex. : 'A1', 'H8') : ")
@@ -59,12 +62,12 @@ def ask_coord():
             letter, number = player_coord[0], player_coord[1:]
             letter = letter.upper()
             try:
-                # détermination de line_no et column_no (comptés à partir de 1)
+
                 line_no = int(number)
                 column_no = ord(letter) - ord('A') + 1
                 if 1 <= line_no <= GRID_SIZE and letter in LETTERS:
                     valid_coord = True
-                     shot_coord = (line_no, column_no)
+                    shot_coord = (line_no, column_no)
                     return shot_coord
             except ValueError:
                 pass
@@ -72,17 +75,13 @@ def ask_coord():
 
 while ships_list:
 
-
-
-    shot_coord = None  # pour éviter un avertissement ("can be undefined")
-
     new_shot= ask_coord()
 
     for ship in ships_list:
-        if shot_coord in ship:
+        if new_shot in ship:
             print('Un navire a été touché par votre tir !')
             # on mémorise ce tir
-            ship[shot_coord] = False
+            ship[new_shot] = False
             # on regarde si le navire est coulé
             if True not in ship.values():
                 print('Le navire touché est coulé !!')
