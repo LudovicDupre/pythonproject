@@ -1,20 +1,94 @@
 #!/usr/bin/env python
 #  -*- coding: utf-8 -*-
 
-# la grille de jeu virtuelle est composée de 10 x 10 cases
-# une case est identifiée par ses coordonnées, un tuple (no_ligne, no_colonne)
-# un no_ligne ou no_colonne est compris dans le programme entre 1 et 10,
-# mais pour le joueur une colonne sera identifiée par une lettre (de 'A' à 'J')
+class Ship:
+    def __init__(self, name, length):
+        self.name = name
+        self.length = length
+        self.coordinates = []
 
-GRID_SIZE = 10
+    def place_ship(self, x, y, orientation):
+        if orientation == "horizontal":
+            for i in range(self.length):
+                self.coordinates.append((x + i, y))
+        elif orientation == "vertical":
+            for i in range(self.length):
+                self.coordinates.append((x, y + i))
 
-# détermination de la liste des lettres utilisées pour identifier les colonnes :
-LETTERS = "ABCDEFGHIJ"
+    def is_hit(self, x, y):
+        return (x, y) in self.coordinates
 
-# chaque navire est constitué d'un dictionnaire dont les clés sont les
-# coordonnées de chaque case le composant, et les valeurs correspondantes
-# l'état de la partie du navire correspondant à la case
-# (True : intact ; False : touché)
+class Grid:
+    def __init__(self, size):
+        self.size = size
+        self.grid = [[' ' for _ in range(size)] for _ in range(size)]
+        self.ships = []
+
+    def display(self):
+        print("  A B C D E F G H I J")
+        for i in range(self.size):
+            row = ' '.join(self.grid[i])
+            print(f"{i+1} {row}")
+
+    def place_ship(self, ship, x, y, orientation):
+        if self.is_valid_placement(ship, x, y, orientation):
+            ship.place_ship(x, y, orientation)
+            self.ships.append(ship)
+            for coord in ship.coordinates:
+                x, y = coord
+                self.grid[y][x] = "O"
+            return True
+        return False
+
+    def is_valid_placement(self, ship, x, y, orientation):
+        if (x < 0 or y < 0 or x >= self.size or y >= self.size):
+            return False
+        if orientation == "horizontal":
+            if x + ship.length > self.size:
+                return False
+            for i in range(ship.length):
+                if self.grid[y][x + i] == "O":
+                    return False
+        elif orientation == "vertical":
+            if y + ship.length > self.size:
+                return False
+            for i in range(ship.length):
+                if self.grid[y + i][x] == "O":
+                    return False
+        return True
+
+    def is_all_ships_sunk(self):
+        return all(ship.is_sunk() for ship in self.ships)
+
+    def play_shot(self, x, y):
+        if (x < 0 or y < 0 or x >= self.size or y >= self.size):
+            return False
+        if self.grid[y][x] == "O":
+            for ship in self.ships:
+                if ship.is_hit(x, y):
+                    self.grid[y][x] = "X"
+                    print("Hit!")
+                    if ship.is_sunk():
+                        print(f"{ship.name} has been sunk!")
+                    return True
+        else:
+            self.grid[y][x] = "."
+            print("Miss!")
+            return False
+
+    @staticmethod
+    def ask_coord():
+        while True:
+            try:
+                coord = input("Enter target coordinates (e.g., A1): ").strip().upper()
+                if len(coord) == 2 and 'A' <= coord[0] <= 'J' and '1' <= coord[1] <= '10':
+                    x = ord(coord[0]) - ord('A')
+                    y = int(coord[1]) - 1
+                    return x, y
+                else:
+                    print("Invalid coordinates. Please try again.")
+            except ValueError:
+                print("Invalid coordinates. Please try again.")
 
 # les navires suivants sont disposés de façon fixe dans la grille :
 #      +---+---+---+---+---+---+---+---+---+---+
@@ -42,56 +116,35 @@ LETTERS = "ABCDEFGHIJ"
 # +----+---+---+---+---+---+---+---+---+---+---+
 # | 10 |   |   |   |   |   |   |   |   |   |   |
 # +----+---+---+---+---+---+---+---+---+---+---+
-aircraft_carrier = {(2, 2): True, (2, 3): True, (2, 4): True, (2, 5): True, (2, 6): True}
-cruiser          = {(4, 1): True, (5, 1): True, (6, 1): True, (7, 1): True}
-destroyer        = {(5, 3): True, (6, 3): True, (7, 3): True}
-submarine        = {(5, 8): True, (5, 9): True, (5, 10): True}
-torpedo_boat     = {(9, 5): True, (9, 6): True}
-ships_list = [aircraft_carrier, cruiser, destroyer, submarine, torpedo_boat]
 
-def ask_coord():
-    valid_coord = False
-    while not valid_coord:
+ships_list = []
+aircraft_carrier = Ship('porte_avion',
+                        {(2, 2): True, (2, 3): True, (2, 4): True, (2, 5): True, (2, 6): True},
+                        ships_list)
+cruiser          = Ship('croiseur',
+                        {(4, 1): True, (5, 1): True, (6, 1): True, (7, 1): True},
+                        ships_list)
+destroyer        = Ship('contre torpilleur',
+                        {(5, 3): True, (6, 3): True, (7, 3): True},
+                        ships_list)
+submarine        = Ship('sous-marin',
+                        {(5, 8): True, (5, 9): True, (5, 10): True},
+                        ships_list)
+torpedo_boat     = Ship('torpilleur',
+                        {(9, 5): True, (9, 6): True},
+                        ships_list)
 
-        player_coord = input("Entrez les coordonnées de votre tir (ex. : 'A1', 'H8') : ")
+# -------------------------------------------------------------------------- #
+# programme principal :                                                      #
+# tant que tous les navires ne sont pas coulés, on demande au joueur         #
+# d'indiquer une case où il souhaite effectuer un tir                         #
+# -------------------------------------------------------------------------- #
 
-        if 2 <= len(player_coord) <= 3:
-            letter, number = player_coord[0], player_coord[1:]
-            letter = letter.upper()
-            try:
-                # détermination de line_no et column_no (comptés à partir de 1)
-                line_no = int(number)
-                column_no = ord(letter) - ord('A') + 1
-                if 1 <= line_no <= GRID_SIZE and letter in LETTERS:
-                    valid_coord = True
-                     shot_coord = (line_no, column_no)
-                    return shot_coord
-            except ValueError:
-                pass
-
-
+grid = Grid(ships_list)
 while ships_list:
+    grid.display()
+    next_shot_coord = Grid.ask_coord()
+    grid.play_shot(next_shot_coord)
 
-
-
-    shot_coord = None  # pour éviter un avertissement ("can be undefined")
-
-    new_shot= ask_coord()
-
-    for ship in ships_list:
-        if shot_coord in ship:
-            print('Un navire a été touché par votre tir !')
-            # on mémorise ce tir
-            ship[shot_coord] = False
-            # on regarde si le navire est coulé
-            if True not in ship.values():
-                print('Le navire touché est coulé !!')
-                # le navire est supprimé de la flotte
-                ships_list.remove(ship)
-            break
-    else:
-        print("Votre tir est tombé dans l'eau")
-
+grid.display()
 print('Bravo, vous avez coulé tous les navires')
-
-
