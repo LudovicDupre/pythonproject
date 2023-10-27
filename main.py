@@ -67,13 +67,9 @@ def ask_coord():
 
 def ship_is_hit(ship, shot_coord):
     if shot_coord in ship:
-        print('Un navire a été touché par votre tir !')
-        ship[shot_coord] = False
-        if all(val is False for val in ship.values()):
-            print('Le navire touché est coulé !!')
-            ships_list.remove(ship)
+        return True
     else:
-        print("Votre tir est tombé dans l'eau")
+        return False
 
 def analyze_shot(ship, shot_coord):
     if shot_coord in ship:
@@ -84,7 +80,7 @@ def analyze_shot(ship, shot_coord):
             ships_list.remove(ship)
         return True
     else:
-        print("Votre tir est tombé dans l'eau")
+
         return False
 
 def ship_is_sunk(ship):
@@ -95,8 +91,10 @@ def play_battleship():
         shot_coord = ask_coord()
         for ship in ships_list:
             if analyze_shot(ship, shot_coord):
-                break
 
+                break
+        else :
+            print("Votre tir est tombé dans l'eau")
     print('Bravo, vous avez coulé tous les navires')
 
 if __name__ == "__main__":
